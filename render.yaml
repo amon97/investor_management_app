@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: investor-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: CORS_ORIGINS
+        sync: false # VercelのURL（例: https://your-app.vercel.app）をここに入力

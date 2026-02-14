@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { Settings, Plus, Trash2, Search, CheckCircle, AlertCircle } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getApiBaseUrl } from "@/lib/api";
+
+const API_BASE = getApiBaseUrl();
 
 const SECTORS = [
   "自動車", "通信", "商社", "食品", "保険", "銀行", "医薬",

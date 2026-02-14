@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getApiBaseUrl } from "@/lib/api";
+
+const API_BASE = getApiBaseUrl();
 
 interface DividendEntry {
     ticker: string;

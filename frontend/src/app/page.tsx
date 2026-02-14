@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { TrendingUp, CalendarDays, Percent, RefreshCw } from "lucide-react";
 import PortfolioChart from "@/components/PortfolioChart";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { getApiBaseUrl } from "@/lib/api";
+
+const API_BASE = getApiBaseUrl();
 
 interface Holding {
   ticker: string;
