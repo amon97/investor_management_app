@@ -1,0 +1,114 @@
+{
+    "articles": [
+        {
+            "id": 1,
+            "title": "トヨタ自動車、2026年3月期の増配を発表",
+            "summary": "トヨタ自動車は2026年3月期の年間配当を前期比10円増配の1株あたり75円にすると発表しました。好調な業績を株主に還元する方針です。",
+            "source": "日本経済新聞",
+            "published_at": "2026-02-14T08:00:00",
+            "url": "https://example.com/news/1",
+            "related_ticker": "7203",
+            "related_name": "トヨタ自動車",
+            "category": "配当"
+        },
+        {
+            "id": 2,
+            "title": "NTT、株式25分割後の初配当を実施へ",
+            "summary": "日本電信電話（NTT）は分割後初の配当を1株あたり5.2円で実施すると発表しました。分割前換算で130円相当となり、実質増配です。",
+            "source": "Bloomberg",
+            "published_at": "2026-02-13T14:30:00",
+            "url": "https://example.com/news/2",
+            "related_ticker": "9432",
+            "related_name": "日本電信電話（NTT）",
+            "category": "配当"
+        },
+        {
+            "id": 3,
+            "title": "三菱商事、資源価格上昇で業績上方修正",
+            "summary": "三菱商事は原油や天然ガスの価格上昇を受けて、2026年3月期の業績予想を上方修正しました。配当への好影響が期待されています。",
+            "source": "ロイター",
+            "published_at": "2026-02-12T10:15:00",
+            "url": "https://example.com/news/3",
+            "related_ticker": "8058",
+            "related_name": "三菱商事",
+            "category": "業績"
+        },
+        {
+            "id": 4,
+            "title": "KDDI、来期も連続増配の方針を表明",
+            "summary": "KDDIは22期連続の増配を継続する方針を示しました。安定した通信事業の収益を背景に、株主還元を強化します。",
+            "source": "日本経済新聞",
+            "published_at": "2026-02-11T09:00:00",
+            "url": "https://example.com/news/4",
+            "related_ticker": "9433",
+            "related_name": "KDDI",
+            "category": "配当"
+        },
+        {
+            "id": 5,
+            "title": "日本たばこ産業、海外事業が好調で株価上昇",
+            "summary": "JTの海外たばこ事業が為替の追い風もあって好調に推移し、株価が年初来高値を更新しました。高配当株として個人投資家の注目を集めています。",
+            "source": "Yahoo!ファイナンス",
+            "published_at": "2026-02-10T15:45:00",
+            "url": "https://example.com/news/5",
+            "related_ticker": "2914",
+            "related_name": "日本たばこ産業（JT）",
+            "category": "株価"
+        },
+        {
+            "id": 6,
+            "title": "東京海上HD、自然災害リスク見直しで保険料改定",
+            "summary": "東京海上ホールディングスは自然災害の増加に伴い保険料を見直すと発表。収益改善と安定配当の維持が見込まれます。",
+            "source": "日本経済新聞",
+            "published_at": "2026-02-09T11:20:00",
+            "url": "https://example.com/news/6",
+            "related_ticker": "8766",
+            "related_name": "東京海上ホールディングス",
+            "category": "業績"
+        },
+        {
+            "id": 7,
+            "title": "三菱UFJ、金利上昇で利ざや改善の見通し",
+            "summary": "日銀の金融政策修正を受けて、三菱UFJフィナンシャル・グループの利ざや改善が見込まれています。配当40円台への引き上げも市場では期待されています。",
+            "source": "Bloomberg",
+            "published_at": "2026-02-08T07:30:00",
+            "url": "https://example.com/news/7",
+            "related_ticker": "8306",
+            "related_name": "三菱UFJフィナンシャルG",
+            "category": "業績"
+        },
+        {
+            "id": 8,
+            "title": "武田薬品、新薬承認で成長期待が高まる",
+            "summary": "武田薬品工業の新たな免疫治療薬がFDA（アメリカ食品医薬品局）から承認を受けました。今後の売上拡大と配当維持への安心感が広がっています。",
+            "source": "ロイター",
+            "published_at": "2026-02-07T13:00:00",
+            "url": "https://example.com/news/8",
+            "related_ticker": "4502",
+            "related_name": "武田薬品工業",
+            "category": "業績"
+        },
+        {
+            "id": 9,
+            "title": "ソニー、ゲーム事業の好調で通期予想引き上げ",
+            "summary": "ソニーグループはPlayStation部門の好調を受けて通期業績予想を上方修正しました。配当も増やす方向で検討中です。",
+            "source": "日本経済新聞",
+            "published_at": "2026-02-06T16:00:00",
+            "url": "https://example.com/news/9",
+            "related_ticker": "6758",
+            "related_name": "ソニーグループ",
+            "category": "業績"
+        },
+        {
+            "id": 10,
+            "title": "【特集】高配当株ランキング2026年版",
+            "summary": "配当利回りが高い日本株のランキングをまとめました。安定配当が魅力の銘柄を中心に、初心者にもわかりやすく解説します。",
+            "source": "東洋経済オンライン",
+            "published_at": "2026-02-05T08:00:00",
+            "url": "https://example.com/news/10",
+            "related_ticker": null,
+            "related_name": null,
+            "category": "特集"
+        }
+    ]
+}

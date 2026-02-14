@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.env
+backend/data/price_cache.json
+
+# Node.js
+node_modules/
+.next/
+*.log
+npm-debug.log*
+
+# 環境変数（秘密情報）
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/

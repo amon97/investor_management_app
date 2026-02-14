@@ -1,0 +1,221 @@
+{
+    "schedule": [
+        {
+            "month": 1,
+            "label": "1月",
+            "entries": []
+        },
+        {
+            "month": 2,
+            "label": "2月",
+            "entries": []
+        },
+        {
+            "month": 3,
+            "label": "3月",
+            "entries": [
+                {
+                    "ticker": "7203",
+                    "name": "トヨタ自動車",
+                    "amount": 11250,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-05-01",
+                    "note": "期末配当（年に2回届く配当金のうち、3月権利分）"
+                },
+                {
+                    "ticker": "9432",
+                    "name": "日本電信電話（NTT）",
+                    "amount": 5200,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                },
+                {
+                    "ticker": "9433",
+                    "name": "KDDI",
+                    "amount": 14000,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                },
+                {
+                    "ticker": "8058",
+                    "name": "三菱商事",
+                    "amount": 20000,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                },
+                {
+                    "ticker": "2914",
+                    "name": "日本たばこ産業（JT）",
+                    "amount": 19400,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                },
+                {
+                    "ticker": "8766",
+                    "name": "東京海上HD",
+                    "amount": 6050,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                },
+                {
+                    "ticker": "8306",
+                    "name": "三菱UFJFG",
+                    "amount": 61500,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                },
+                {
+                    "ticker": "4502",
+                    "name": "武田薬品工業",
+                    "amount": 49000,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                },
+                {
+                    "ticker": "6758",
+                    "name": "ソニーグループ",
+                    "amount": 5000,
+                    "ex_date": "2026-03-30",
+                    "payment_date": "2026-06-01",
+                    "note": "期末配当"
+                }
+            ]
+        },
+        {
+            "month": 4,
+            "label": "4月",
+            "entries": []
+        },
+        {
+            "month": 5,
+            "label": "5月",
+            "entries": []
+        },
+        {
+            "month": 6,
+            "label": "6月",
+            "entries": [
+                {
+                    "ticker": "2914",
+                    "name": "日本たばこ産業（JT）",
+                    "amount": 19400,
+                    "ex_date": "2026-06-30",
+                    "payment_date": "2026-09-01",
+                    "note": "中間配当（年に2回届く配当金のうち、6月権利分）"
+                }
+            ]
+        },
+        {
+            "month": 7,
+            "label": "7月",
+            "entries": []
+        },
+        {
+            "month": 8,
+            "label": "8月",
+            "entries": []
+        },
+        {
+            "month": 9,
+            "label": "9月",
+            "entries": [
+                {
+                    "ticker": "7203",
+                    "name": "トヨタ自動車",
+                    "amount": 11250,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                },
+                {
+                    "ticker": "9432",
+                    "name": "日本電信電話（NTT）",
+                    "amount": 5200,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                },
+                {
+                    "ticker": "9433",
+                    "name": "KDDI",
+                    "amount": 14000,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                },
+                {
+                    "ticker": "8058",
+                    "name": "三菱商事",
+                    "amount": 20000,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                },
+                {
+                    "ticker": "8766",
+                    "name": "東京海上HD",
+                    "amount": 6050,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                },
+                {
+                    "ticker": "8306",
+                    "name": "三菱UFJFG",
+                    "amount": 61500,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                },
+                {
+                    "ticker": "4502",
+                    "name": "武田薬品工業",
+                    "amount": 49000,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                },
+                {
+                    "ticker": "6758",
+                    "name": "ソニーグループ",
+                    "amount": 5000,
+                    "ex_date": "2026-09-28",
+                    "payment_date": "2026-12-01",
+                    "note": "中間配当"
+                }
+            ]
+        },
+        {
+            "month": 10,
+            "label": "10月",
+            "entries": []
+        },
+        {
+            "month": 11,
+            "label": "11月",
+            "entries": []
+        },
+        {
+            "month": 12,
+            "label": "12月",
+            "entries": [
+                {
+                    "ticker": "2914",
+                    "name": "日本たばこ産業（JT）",
+                    "amount": 19400,
+                    "ex_date": "2026-12-28",
+                    "payment_date": "2027-03-01",
+                    "note": "期末配当"
+                }
+            ]
+        }
+    ],
+    "annual_total": 398400
+}
