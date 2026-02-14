@@ -27,7 +27,6 @@ jobs:
         run: npm ci
 
       - name: Vercel へデプロイ
-        working-directory: frontend
         run: |
           npm install -g vercel
           vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
