@@ -1,0 +1,25 @@
+name: バックエンド → Railway デプロイ
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Railway Production Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Railway CLI のインストール
+        run: npm install -g @railway/cli
+
+      - name: Railway へデプロイ
+        working-directory: backend
+        run: railway up --service investor-backend --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
