@@ -30,9 +30,19 @@ app = FastAPI(
     version="0.2.0",
 )
 
-# CORS 設定（環境変数 CORS_ORIGINS から取得、デフォルトはローカル開発用）
-_raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
-CORS_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+# CORS 設定
+# 環境変数 CORS_ORIGINS (カンマ区切り) に本番フロントエンドのURLを設定する
+# ローカル開発用のURLは自動的に追加される
+_raw_origins = os.getenv("CORS_ORIGINS", "")
+_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
+# 常に許可するオリジン（ローカル開発用）
+_local_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+CORS_ORIGINS = list(set(_origins + _local_origins))
 
 app.add_middleware(
     CORSMiddleware,
