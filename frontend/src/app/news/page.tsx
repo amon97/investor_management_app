@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Newspaper, RefreshCw } from "lucide-react";
 import NewsList from "@/components/NewsList";
 
-import { getApiBaseUrl } from "@/lib/api";
+import { getApiBaseUrl, authFetch } from "@/lib/api";
 
 const API_BASE = getApiBaseUrl();
 
@@ -16,7 +16,7 @@ export default function NewsPage() {
     const fetchNews = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/api/news`);
+            const res = await authFetch(`${API_BASE}/api/news`);
             const data = await res.json();
             setArticles(data.articles || []);
         } catch (error) {

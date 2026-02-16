@@ -10,7 +10,7 @@
 
 import json
 import os
-from fastapi import FastAPI, Query, HTTPException, Header
+from fastapi import FastAPI, Query, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -22,7 +22,7 @@ try:
 except ImportError:
     pass
 
-from price_fetcher import fetch_prices, fetch_stock_info, get_cache_updated_at
+from price_fetcher import fetch_prices, fetch_stock_info, get_cache_updated_at, _fetch_annual_dividend, to_yahoo_symbol
 from news_fetcher import fetch_all_news, fetch_news_for_ticker
 
 app = FastAPI(
@@ -32,8 +32,29 @@ app = FastAPI(
 )
 
 # Firebase初期化
-from firebase_config import initialize_firebase
+from firebase_config import initialize_firebase, verify_token
 initialize_firebase()
+
+
+# ---------- 認証ミドルウェア ----------
+
+def get_current_user(authorization: Optional[str] = Header(default=None)) -> dict | None:
+    """
+    Firebase IDトークンを検証して現在のユーザーを返す。
+    Firebase未設定時は認証をスキップ（開発用）。
+    """
+    import firebase_admin
+    if not firebase_admin._apps:
+        return None  # Firebase未設定の場合はスキップ
+
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="認証が必要です")
+
+    id_token = authorization.split(" ", 1)[1]
+    decoded = verify_token(id_token)
+    if not decoded:
+        raise HTTPException(status_code=401, detail="無効なトークンです")
+    return decoded
 
 # CORS 設定
 # 環境変数 CORS_ORIGINS (カンマ区切り) に本番フロントエンドのURLを設定する
@@ -114,7 +135,7 @@ def health_check():
 # ---------- ポートフォリオ ----------
 
 @app.get("/api/portfolio")
-def get_portfolio():
+def get_portfolio(user: dict | None = Depends(get_current_user)):
     """
     保有資産のポートフォリオ情報を返す。
     Yahoo Finance APIで現在値を取得（5分キャッシュ）。
@@ -149,8 +170,8 @@ def get_portfolio():
 
 
 @app.post("/api/portfolio/refresh")
-def refresh_prices():
-    """全銘柄の株価を強制的にYahoo Financeから再取得する"""
+def refresh_prices(user: dict | None = Depends(get_current_user)):
+    """全銘柄の株価・配当を強制的にYahoo Financeから再取得する"""
     from price_fetcher import CACHE_FILE
     if os.path.exists(CACHE_FILE):
         os.remove(CACHE_FILE)
@@ -159,9 +180,21 @@ def refresh_prices():
     tickers = [h["ticker"] for h in holdings]
     prices = fetch_prices(tickers)
 
+    # 配当も更新
+    dividend_updated = []
+    for h in holdings:
+        symbol = to_yahoo_symbol(h["ticker"])
+        new_dividend = _fetch_annual_dividend(symbol)
+        if new_dividend > 0 and new_dividend != h.get("annual_dividend_per_share", 0):
+            h["annual_dividend_per_share"] = new_dividend
+            dividend_updated.append(h["ticker"])
+    if dividend_updated:
+        save_holdings(holdings)
+
     return {
-        "message": "価格を更新しました",
+        "message": "価格と配当を更新しました",
         "prices": prices,
+        "dividend_updated": dividend_updated,
         "updated_at": get_cache_updated_at(),
     }
 
@@ -171,9 +204,9 @@ def refresh_prices():
 @app.post("/api/portfolio/holdings", status_code=201)
 def add_holding(
     body: HoldingCreate,
-    authorization: Optional[str] = Header(default=None),
+    user: dict | None = Depends(get_current_user),
 ):
-    """保有銘柄を新規追加する。Authorizationヘッダーがある場合はFirestoreにも保存。"""
+    """保有銘柄を新規追加する。認証済みの場合はFirestoreにも保存。"""
     holdings = get_holdings()
 
     if any(h["ticker"] == body.ticker for h in holdings):
@@ -196,18 +229,15 @@ def add_holding(
     holdings.append(new_holding)
     save_holdings(holdings)
 
-    # Firestoreへの保存（Authorizationヘッダーがある場合）
-    if authorization and authorization.startswith("Bearer "):
-        id_token = authorization.split(" ", 1)[1]
+    # Firestoreへの保存（認証済みの場合）
+    if user:
         try:
-            from firebase_config import verify_token, get_firestore_client
-            decoded = verify_token(id_token)
-            if decoded:
-                uid = decoded["uid"]
-                db = get_firestore_client()
-                if db:
-                    db.collection("users").document(uid).collection("holdings").document(body.ticker).set(new_holding)
-                    print(f"Firestore保存完了: users/{uid}/holdings/{body.ticker}")
+            from firebase_config import get_firestore_client
+            uid = user["uid"]
+            db = get_firestore_client()
+            if db:
+                db.collection("users").document(uid).collection("holdings").document(body.ticker).set(new_holding)
+                print(f"Firestore保存完了: users/{uid}/holdings/{body.ticker}")
         except Exception as e:
             print(f"Firestore保存エラー（処理は続行）: {e}")
 
@@ -215,7 +245,7 @@ def add_holding(
 
 
 @app.put("/api/portfolio/holdings/{ticker}")
-def update_holding(ticker: str, body: HoldingUpdate):
+def update_holding(ticker: str, body: HoldingUpdate, user: dict | None = Depends(get_current_user)):
     """既存の保有銘柄を更新する"""
     holdings = get_holdings()
     for h in holdings:
@@ -236,7 +266,7 @@ def update_holding(ticker: str, body: HoldingUpdate):
 
 
 @app.delete("/api/portfolio/holdings/{ticker}", status_code=204)
-def delete_holding(ticker: str):
+def delete_holding(ticker: str, user: dict | None = Depends(get_current_user)):
     """保有銘柄を削除する"""
     holdings = get_holdings()
     new_holdings = [h for h in holdings if h["ticker"] != ticker]
@@ -247,7 +277,7 @@ def delete_holding(ticker: str):
 
 
 @app.get("/api/stock-info/{ticker}")
-def get_stock_info(ticker: str):
+def get_stock_info(ticker: str, user: dict | None = Depends(get_current_user)):
     """指定銘柄の現在値・基本情報をYahoo Financeから取得"""
     info = fetch_stock_info(ticker)
     if not info:
@@ -258,7 +288,7 @@ def get_stock_info(ticker: str):
 # ---------- 配当スケジュール ----------
 
 @app.get("/api/dividends")
-def get_dividends():
+def get_dividends(user: dict | None = Depends(get_current_user)):
     """月別の配当金入金スケジュールを返す"""
     return load_json(DIVIDENDS_FILE)
 
@@ -266,7 +296,7 @@ def get_dividends():
 # ---------- ニュース ----------
 
 @app.get("/api/news")
-def get_news(ticker: str | None = Query(default=None, description="銘柄コードでフィルタリング")):
+def get_news(ticker: str | None = Query(default=None, description="銘柄コードでフィルタリング"), user: dict | None = Depends(get_current_user)):
     """
     保有銘柄に関連する最新ニュースをGoogle News RSSから取得。
     """

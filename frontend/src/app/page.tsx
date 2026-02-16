@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { TrendingUp, CalendarDays, Percent, RefreshCw } from "lucide-react";
 import PortfolioChart from "@/components/PortfolioChart";
 
-import { getApiBaseUrl } from "@/lib/api";
+import { getApiBaseUrl, authFetch } from "@/lib/api";
 
 const API_BASE = getApiBaseUrl();
 
@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const loadPortfolio = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/portfolio`);
+      const res = await authFetch(`${API_BASE}/api/portfolio`);
       const data = await res.json();
       setPortfolio(data);
     } catch {
@@ -64,15 +64,24 @@ export default function DashboardPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetch(`${API_BASE}/api/portfolio/refresh`, { method: "POST" });
+      await authFetch(`${API_BASE}/api/portfolio/refresh`, { method: "POST" });
       await loadPortfolio();
     } finally {
       setRefreshing(false);
     }
   };
 
+  // 初回アクセス時に自動で株価・配当を最新に更新してからポートフォリオを読み込む
   useEffect(() => {
-    loadPortfolio();
+    const initialRefresh = async () => {
+      try {
+        await authFetch(`${API_BASE}/api/portfolio/refresh`, { method: "POST" });
+      } catch {
+        // リフレッシュ失敗してもキャッシュ済みデータで表示
+      }
+      await loadPortfolio();
+    };
+    initialRefresh();
   }, [loadPortfolio]);
 
   if (loading) {
