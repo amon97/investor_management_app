@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "マイ配当ダッシュボード",
+  title: "たけしぱっと見配当",
   description:
     "保有株の配当金を一目で確認。シニア投資家のための配当管理・ニュース集約アプリ。",
   manifest: "/manifest.json",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "マイ配当ダッシュボード",
+    title: "たけしぱっと見配当",
     description: "保有株の配当金を一目で確認できる投資管理アプリ",
     locale: "ja_JP",
     type: "website",

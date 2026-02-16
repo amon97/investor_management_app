@@ -31,7 +31,7 @@ export default function Header() {
         <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
           <span style={{ fontSize: "1.5rem" }}>💰</span>
           <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#333" }}>
-            マイ配当ダッシュボード
+            たけしぱっと見配当
           </span>
         </div>
         {user && (

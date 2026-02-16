@@ -31,7 +31,7 @@ export default function LoginPage() {
       boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
     }}>
       <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>💰</div>
-      <h1 style={{ fontSize: "1.6rem", marginBottom: "1rem", color: "#333" }}>マイ配当ダッシュボード</h1>
+      <h1 style={{ fontSize: "1.6rem", marginBottom: "1rem", color: "#333" }}>たけしぱっと見配当</h1>
       <p style={{ marginBottom: "2rem", color: "#666", fontSize: "1.1rem", lineHeight: 1.8 }}>
         あなたの配当金を<br/>
         かんたんに管理できるアプリです。<br/>

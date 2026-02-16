@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Newspaper, RefreshCw } from "lucide-react";
 import NewsList from "@/components/NewsList";
 
@@ -8,17 +8,32 @@ import { getApiBaseUrl, authFetch } from "@/lib/api";
 
 const API_BASE = getApiBaseUrl();
 
+// ページ遷移してもキャッシュを保持（再マウント時に即表示）
+let cachedArticles: never[] | null = null;
+
+function SkeletonCard() {
+    return (
+        <div className="card" style={{ padding: "1rem", marginBottom: "0.75rem" }}>
+            <div className="loading-pulse" style={{ height: "1.1rem", width: "70%", background: "#e5e7eb", borderRadius: 6, marginBottom: "0.5rem" }} />
+            <div className="loading-pulse" style={{ height: "0.9rem", width: "90%", background: "#f3f4f6", borderRadius: 6, marginBottom: "0.4rem" }} />
+            <div className="loading-pulse" style={{ height: "0.9rem", width: "40%", background: "#f3f4f6", borderRadius: 6 }} />
+        </div>
+    );
+}
+
 export default function NewsPage() {
-    const [articles, setArticles] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [articles, setArticles] = useState(cachedArticles || []);
+    const [loading, setLoading] = useState(!cachedArticles);
     const [refreshing, setRefreshing] = useState(false);
+    const fetchedRef = useRef(false);
 
     const fetchNews = async () => {
-        setLoading(true);
         try {
             const res = await authFetch(`${API_BASE}/api/news`);
             const data = await res.json();
-            setArticles(data.articles || []);
+            const fetched = data.articles || [];
+            cachedArticles = fetched;
+            setArticles(fetched);
         } catch (error) {
             console.error("News fetch error:", error);
         } finally {
@@ -33,7 +48,15 @@ export default function NewsPage() {
     };
 
     useEffect(() => {
-        fetchNews();
+        if (fetchedRef.current) return;
+        fetchedRef.current = true;
+        if (cachedArticles) {
+            // キャッシュがあれば即表示、バックグラウンドで更新
+            fetchNews();
+        } else {
+            setLoading(true);
+            fetchNews();
+        }
     }, []);
 
     return (
@@ -70,11 +93,11 @@ export default function NewsPage() {
                 </button>
             </div>
 
-            {loading && !refreshing ? (
-                <div style={{ textAlign: "center", padding: "4rem 0" }}>
-                    <p className="loading-pulse" style={{ fontSize: "1.25rem", color: "#888" }}>
-                        ニュースを探しています...
-                    </p>
+            {loading && articles.length === 0 ? (
+                <div>
+                    {[...Array(5)].map((_, i) => (
+                        <SkeletonCard key={i} />
+                    ))}
                 </div>
             ) : (
                 <NewsList articles={articles} />
