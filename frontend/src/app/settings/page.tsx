@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, User as UserIcon, Mail } from "lucide-react";
+import { User as UserIcon, LogOut, Mail } from "lucide-react";
 
 export default function SettingsPage() {
     const { user, logout } = useAuth();
