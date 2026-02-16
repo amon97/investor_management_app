@@ -289,8 +289,39 @@ def get_stock_info(ticker: str, user: dict | None = Depends(get_current_user)):
 
 @app.get("/api/dividends")
 def get_dividends(user: dict | None = Depends(get_current_user)):
-    """月別の配当金入金スケジュールを返す"""
-    return load_json(DIVIDENDS_FILE)
+    """月別の配当金入金スケジュールを返す（保有銘柄に基づいてフィルタリング）"""
+    data = load_json(DIVIDENDS_FILE)
+    holdings = get_holdings()
+    held_tickers = {h["ticker"] for h in holdings}
+
+    # スケジュールのフィルタリング
+    new_schedule = []
+    annual_total = 0
+
+    for month_data in data.get("schedule", []):
+        filtered_entries = [
+            e for e in month_data.get("entries", [])
+            if e["ticker"] in held_tickers
+        ]
+        if filtered_entries:
+            # エントリーがある場合、金額を再計算（簡易的: mockデータの単価があればそれを使うが、今回はmockのamountをそのまま使うか、株数比で補正するのが理想だが、
+            # MVPなので「表示/非表示」の制御に留め、amountはそのまま（ただし保有していない銘柄は除外）とする）
+            pass
+        
+        # 月ごとの合計を加算（フィルタリングされたものだけ）
+        for e in filtered_entries:
+            annual_total += e["amount"]
+
+        new_schedule.append({
+            "month": month_data["month"],
+            "label": month_data["label"],
+            "entries": filtered_entries
+        })
+
+    return {
+        "schedule": new_schedule,
+        "annual_total": annual_total
+    }
 
 
 # ---------- ニュース ----------
