@@ -244,12 +244,12 @@ export default function DashboardPage() {
                     <p
                       style={{
                         color: isPositive ? "#16a34a" : "#dc2626",
-                        fontSize: "0.95rem",
+                        fontSize: "1rem",
                         margin: "0.25rem 0 0",
                         fontWeight: 600,
                       }}
                     >
-                      {isPositive ? "+" : ""}
+                      {isPositive ? "▲ +" : "▼ "}
                       {Math.round(gain).toLocaleString()}円（{isPositive ? "+" : ""}
                       {gainPercent}%）
                     </p>
@@ -261,17 +261,17 @@ export default function DashboardPage() {
                     paddingTop: "0.75rem",
                     borderTop: "1px solid #f0f0f0",
                     display: "flex",
-                    gap: "1.5rem",
+                    gap: "1rem",
                     flexWrap: "wrap",
-                    fontSize: "0.95rem",
-                    color: "#666",
+                    fontSize: "1rem",
+                    color: "#555",
                   }}
                 >
-                  <span>{h.shares}株保有</span>
-                  <span>取得単価: {h.average_cost.toLocaleString()}円</span>
-                  <span>現在値: {h.current_price.toLocaleString()}円</span>
-                  <span>
-                    年間配当: {Math.round(h.shares * h.annual_dividend_per_share).toLocaleString()}円
+                  <span>📦 {h.shares}株保有</span>
+                  <span>💰 買った時: {h.average_cost.toLocaleString()}円</span>
+                  <span>📈 今の値段: {h.current_price.toLocaleString()}円</span>
+                  <span style={{ color: "#16a34a", fontWeight: 600 }}>
+                    🎁 年間配当: {Math.round(h.shares * h.annual_dividend_per_share).toLocaleString()}円
                   </span>
                 </div>
               </div>

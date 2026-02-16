@@ -97,9 +97,9 @@ export default function ManagePage() {
         setForm((f) => ({
           ...f,
           name: info.name || f.name,
-          average_cost: f.average_cost || String(Math.round(info.current_price || 0)),
-          annual_dividend_per_share: f.annual_dividend_per_share || String(info.annual_dividend_per_share || ""),
-          sector: info.sector && info.sector !== "その他" ? info.sector : f.sector,
+          average_cost: String(Math.round(info.current_price || 0)),
+          annual_dividend_per_share: String(info.annual_dividend_per_share || "0"),
+          sector: info.sector || f.sector,
         }));
         setAutoFilled(true);
         // 3秒後に取得済みインジケーターを消す

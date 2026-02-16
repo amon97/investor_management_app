@@ -86,7 +86,7 @@ def _guess_category(title: str) -> str:
 
 def fetch_all_news(holdings: list[dict], limit_per_ticker: int = 5) -> list[dict]:
     """
-    全保有銘柄のニュースを取得してマージ・重複除去する。
+    全保有銘柄のニュースを並列取得してマージ・重複除去する。
 
     Args:
         holdings: 保有銘柄リスト（ticker と name フィールドを含む）
@@ -95,13 +95,18 @@ def fetch_all_news(holdings: list[dict], limit_per_ticker: int = 5) -> list[dict
     Returns:
         日付降順で並べたニュース記事リスト
     """
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _fetch(h):
+        return fetch_news_for_ticker(h["ticker"], h["name"], limit=limit_per_ticker)
+
     all_articles = []
     seen_urls = set()
 
-    for h in holdings:
-        articles = fetch_news_for_ticker(
-            h["ticker"], h["name"], limit=limit_per_ticker
-        )
+    with ThreadPoolExecutor(max_workers=min(len(holdings), 8)) as executor:
+        results = executor.map(_fetch, holdings)
+
+    for articles in results:
         for article in articles:
             if article["url"] not in seen_urls:
                 all_articles.append(article)
