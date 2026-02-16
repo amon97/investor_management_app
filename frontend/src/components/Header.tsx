@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
@@ -35,26 +36,26 @@ export default function Header() {
           </span>
         </div>
         {user && (
-          <button
-            onClick={logout}
-            aria-label="ログアウト"
-            style={{
+          <Link href="/settings" aria-label="設定">
+            <div style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              background: "#e5e7eb",
               display: "flex",
               alignItems: "center",
-              gap: "0.4rem",
-              padding: "0.4rem 0.8rem",
-              background: "none",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              cursor: "pointer",
-              color: "#666",
-              fontSize: "0.85rem",
-              minHeight: 36,
-            }}
-          >
-            <LogOut size={16} />
-            ログアウト
-          </button>
+              justifyContent: "center",
+              overflow: "hidden",
+              border: "1px solid #d1d5db",
+            }}>
+              {user.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoURL} alt="User" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <User size={20} color="#6b7280" />
+              )}
+            </div>
+          </Link>
         )}
       </div>
     </header>
