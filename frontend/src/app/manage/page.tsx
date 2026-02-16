@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Settings, Plus, Trash2, Search, CheckCircle, AlertCircle } from "lucide-react";
+import { Settings, Plus, Trash2, Search, CheckCircle, AlertCircle, Sparkles } from "lucide-react";
+import { doc, setDoc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 import { getApiBaseUrl } from "@/lib/api";
 
@@ -44,6 +47,7 @@ const emptyForm: FormData = {
 type AlertType = { type: "success" | "error"; message: string } | null;
 
 export default function ManagePage() {
+  const { user } = useAuth();
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -51,6 +55,8 @@ export default function ManagePage() {
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState<AlertType>(null);
   const [tickerSearching, setTickerSearching] = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
+  const [fetchedPrice, setFetchedPrice] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const showAlert = (type: "success" | "error", message: string) => {
@@ -75,24 +81,57 @@ export default function ManagePage() {
     loadHoldings();
   }, [loadHoldings]);
 
-  // 証券コードを入力したら Yahoo Finance で銘柄名を自動取得
+  // 証券コードを入力したら Yahoo Finance で銘柄情報を自動取得
   const handleTickerBlur = async () => {
     const ticker = form.ticker.trim();
-    if (!ticker || form.name) return;
+    if (!ticker) return;
+
     setTickerSearching(true);
+    setAutoFilled(false);
+    setFetchedPrice(null);
     try {
       const res = await fetch(`${API_BASE}/api/stock-info/${ticker}`);
       if (res.ok) {
         const info = await res.json();
+        setFetchedPrice(info.current_price || null);
         setForm((f) => ({
           ...f,
-          average_cost: f.average_cost || String(Math.round(info.current_price)),
+          name: info.name || f.name,
+          average_cost: f.average_cost || String(Math.round(info.current_price || 0)),
+          annual_dividend_per_share: f.annual_dividend_per_share || String(info.annual_dividend_per_share || ""),
+          sector: info.sector && info.sector !== "その他" ? info.sector : f.sector,
         }));
+        setAutoFilled(true);
+        // 3秒後に取得済みインジケーターを消す
+        setTimeout(() => setAutoFilled(false), 3000);
       }
     } catch {
       // ignore
     } finally {
       setTickerSearching(false);
+    }
+  };
+
+  // Firestoreにホールディングを保存（ログイン中かつFirebase設定済みの場合のみ）
+  const saveToFirestore = async (holding: Holding) => {
+    if (!user || !db) return;
+    try {
+      await setDoc(
+        doc(db, "users", user.uid, "holdings", holding.ticker),
+        holding
+      );
+    } catch (e) {
+      console.warn("Firestore保存エラー:", e);
+    }
+  };
+
+  // FirestoreからHoldingを削除（ログイン中かつFirebase設定済みの場合のみ）
+  const deleteFromFirestore = async (ticker: string) => {
+    if (!user || !db) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "holdings", ticker));
+    } catch (e) {
+      console.warn("Firestore削除エラー:", e);
     }
   };
 
@@ -105,17 +144,27 @@ export default function ManagePage() {
 
     setSubmitting(true);
     try {
+      // Authorizationヘッダーを付与（ログイン中のみ）
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (user) {
+        const { getAuth } = await import("firebase/auth");
+        const idToken = await getAuth().currentUser?.getIdToken();
+        if (idToken) headers["Authorization"] = `Bearer ${idToken}`;
+      }
+
+      const holdingPayload = {
+        ticker: form.ticker.trim(),
+        name: form.name.trim(),
+        shares: parseInt(form.shares),
+        average_cost: parseFloat(form.average_cost),
+        annual_dividend_per_share: parseFloat(form.annual_dividend_per_share || "0"),
+        sector: form.sector,
+      };
+
       const res = await fetch(`${API_BASE}/api/portfolio/holdings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ticker: form.ticker.trim(),
-          name: form.name.trim(),
-          shares: parseInt(form.shares),
-          average_cost: parseFloat(form.average_cost),
-          annual_dividend_per_share: parseFloat(form.annual_dividend_per_share || "0"),
-          sector: form.sector,
-        }),
+        headers,
+        body: JSON.stringify(holdingPayload),
       });
 
       if (res.status === 409) {
@@ -128,8 +177,15 @@ export default function ManagePage() {
         return;
       }
 
+      const savedHolding: Holding = await res.json();
+
+      // Firestoreにも保存（クライアント側でも確実に保存）
+      await saveToFirestore(savedHolding);
+
       showAlert("success", "銘柄を追加しました");
       setForm(emptyForm);
+      setFetchedPrice(null);
+      setAutoFilled(false);
       setShowForm(false);
       await loadHoldings();
     } catch {
@@ -145,6 +201,8 @@ export default function ManagePage() {
         method: "DELETE",
       });
       if (res.ok || res.status === 204) {
+        // Firestoreからも削除
+        await deleteFromFirestore(ticker);
         showAlert("success", "銘柄を削除しました");
         setDeleteConfirm(null);
         await loadHoldings();
@@ -164,7 +222,7 @@ export default function ManagePage() {
           <Settings size={28} />
           保有銘柄の管理
         </h1>
-        <p style={{ color: "#666", marginTop: "0.25rem" }}>
+        <p style={{ color: "#666", marginTop: "0.25rem", fontSize: "1rem" }}>
           保有している株の銘柄を追加・削除できます
         </p>
       </div>
@@ -182,7 +240,7 @@ export default function ManagePage() {
             background: alert.type === "success" ? "#f0fdf4" : "#fef2f2",
             border: `1px solid ${alert.type === "success" ? "#bbf7d0" : "#fecaca"}`,
             color: alert.type === "success" ? "#16a34a" : "#dc2626",
-            fontSize: "1rem",
+            fontSize: "1.05rem",
             fontWeight: 600,
           }}
         >
@@ -207,7 +265,7 @@ export default function ManagePage() {
             marginBottom: "1.5rem",
             width: "100%",
             justifyContent: "center",
-            fontSize: "1.05rem",
+            fontSize: "1.1rem",
           }}
         >
           <Plus size={20} />
@@ -234,7 +292,11 @@ export default function ManagePage() {
                   <input
                     type="text"
                     value={form.ticker}
-                    onChange={(e) => setForm((f) => ({ ...f, ticker: e.target.value }))}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, ticker: e.target.value }));
+                      setAutoFilled(false);
+                      setFetchedPrice(null);
+                    }}
                     onBlur={handleTickerBlur}
                     placeholder="例: 7203"
                     maxLength={6}
@@ -243,17 +305,33 @@ export default function ManagePage() {
                   />
                   {tickerSearching && (
                     <Search
-                      size={16}
+                      size={18}
                       style={{
                         position: "absolute",
                         right: 12,
                         top: "50%",
                         transform: "translateY(-50%)",
                         color: "#888",
+                        animation: "spin 1s linear infinite",
                       }}
                     />
                   )}
                 </div>
+                {/* 自動取得完了インジケーター */}
+                {autoFilled && (
+                  <p style={{
+                    marginTop: "0.4rem",
+                    fontSize: "0.9rem",
+                    color: "#16a34a",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                    fontWeight: 600,
+                  }}>
+                    <Sparkles size={14} />
+                    銘柄情報を自動取得しました
+                  </p>
+                )}
               </div>
 
               {/* 銘柄名 */}
@@ -295,6 +373,17 @@ export default function ManagePage() {
                     style={inputStyle}
                     required
                   />
+                  {/* 現在値参考表示 */}
+                  {fetchedPrice !== null && fetchedPrice > 0 && (
+                    <p style={{
+                      marginTop: "0.35rem",
+                      fontSize: "0.88rem",
+                      color: "#2563eb",
+                      fontWeight: 600,
+                    }}>
+                      参考現在値: ¥{fetchedPrice.toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -336,7 +425,7 @@ export default function ManagePage() {
                   type="submit"
                   disabled={submitting}
                   className="btn-primary"
-                  style={{ flex: 1, fontSize: "1rem" }}
+                  style={{ flex: 1, fontSize: "1.05rem" }}
                 >
                   {submitting ? "登録中..." : "追加する"}
                 </button>
@@ -345,6 +434,8 @@ export default function ManagePage() {
                   onClick={() => {
                     setShowForm(false);
                     setForm(emptyForm);
+                    setFetchedPrice(null);
+                    setAutoFilled(false);
                   }}
                   style={{
                     flex: 1,
@@ -352,7 +443,7 @@ export default function ManagePage() {
                     borderRadius: "12px",
                     border: "2px solid #e5e7eb",
                     background: "#fff",
-                    fontSize: "1rem",
+                    fontSize: "1.05rem",
                     cursor: "pointer",
                     minHeight: 48,
                   }}
@@ -377,7 +468,7 @@ export default function ManagePage() {
       ) : holdings.length === 0 ? (
         <div className="card" style={{ textAlign: "center", padding: "2rem", color: "#888" }}>
           <p style={{ fontSize: "1.1rem" }}>保有銘柄がありません</p>
-          <p style={{ fontSize: "0.9rem", marginTop: "0.5rem" }}>「銘柄を追加する」ボタンから追加してください</p>
+          <p style={{ fontSize: "0.95rem", marginTop: "0.5rem" }}>「銘柄を追加する」ボタンから追加してください</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -385,14 +476,14 @@ export default function ManagePage() {
             <div key={h.ticker} className="card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 700, fontSize: "1.05rem", margin: 0 }}>{h.name}</p>
-                  <p style={{ color: "#888", fontSize: "0.88rem", margin: "0.2rem 0 0" }}>
+                  <p style={{ fontWeight: 700, fontSize: "1.1rem", margin: 0 }}>{h.name}</p>
+                  <p style={{ color: "#888", fontSize: "0.9rem", margin: "0.2rem 0 0" }}>
                     コード: {h.ticker} ／ {h.sector}
                   </p>
-                  <p style={{ color: "#555", fontSize: "0.9rem", margin: "0.4rem 0 0" }}>
+                  <p style={{ color: "#555", fontSize: "0.95rem", margin: "0.4rem 0 0" }}>
                     {h.shares}株 ／ 取得単価: {h.average_cost.toLocaleString()}円 ／ 現在値: {h.current_price.toLocaleString()}円
                   </p>
-                  <p style={{ color: "#16a34a", fontSize: "0.9rem", margin: "0.2rem 0 0", fontWeight: 600 }}>
+                  <p style={{ color: "#16a34a", fontSize: "0.95rem", margin: "0.2rem 0 0", fontWeight: 600 }}>
                     年間配当: {Math.round(h.shares * h.annual_dividend_per_share).toLocaleString()}円
                   </p>
                 </div>
@@ -401,7 +492,7 @@ export default function ManagePage() {
                 <div>
                   {deleteConfirm === h.ticker ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-end" }}>
-                      <p style={{ fontSize: "0.85rem", color: "#dc2626", margin: 0, fontWeight: 600 }}>
+                      <p style={{ fontSize: "0.9rem", color: "#dc2626", margin: 0, fontWeight: 600 }}>
                         本当に削除しますか？
                       </p>
                       <div style={{ display: "flex", gap: "0.4rem" }}>
@@ -413,7 +504,7 @@ export default function ManagePage() {
                             color: "#fff",
                             border: "none",
                             borderRadius: "8px",
-                            fontSize: "0.9rem",
+                            fontSize: "0.95rem",
                             cursor: "pointer",
                             minHeight: 40,
                           }}
@@ -428,7 +519,7 @@ export default function ManagePage() {
                             color: "#333",
                             border: "none",
                             borderRadius: "8px",
-                            fontSize: "0.9rem",
+                            fontSize: "0.95rem",
                             cursor: "pointer",
                             minHeight: 40,
                           }}
@@ -470,7 +561,7 @@ export default function ManagePage() {
 
 const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "0.95rem",
+  fontSize: "1rem",
   fontWeight: 600,
   marginBottom: "0.4rem",
   color: "#333",

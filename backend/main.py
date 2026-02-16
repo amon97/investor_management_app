@@ -10,9 +10,10 @@
 
 import json
 import os
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 
 # .env ファイルの読み込み（存在しない場合はスキップ）
 try:
@@ -29,6 +30,10 @@ app = FastAPI(
     description="シニア投資家向け配当管理・ニュース集約アプリのバックエンド (MVP)",
     version="0.2.0",
 )
+
+# Firebase初期化
+from firebase_config import initialize_firebase
+initialize_firebase()
 
 # CORS 設定
 # 環境変数 CORS_ORIGINS (カンマ区切り) に本番フロントエンドのURLを設定する
@@ -164,8 +169,11 @@ def refresh_prices():
 # ---------- 銘柄CRUD ----------
 
 @app.post("/api/portfolio/holdings", status_code=201)
-def add_holding(body: HoldingCreate):
-    """保有銘柄を新規追加する"""
+def add_holding(
+    body: HoldingCreate,
+    authorization: Optional[str] = Header(default=None),
+):
+    """保有銘柄を新規追加する。Authorizationヘッダーがある場合はFirestoreにも保存。"""
     holdings = get_holdings()
 
     if any(h["ticker"] == body.ticker for h in holdings):
@@ -187,6 +195,22 @@ def add_holding(body: HoldingCreate):
 
     holdings.append(new_holding)
     save_holdings(holdings)
+
+    # Firestoreへの保存（Authorizationヘッダーがある場合）
+    if authorization and authorization.startswith("Bearer "):
+        id_token = authorization.split(" ", 1)[1]
+        try:
+            from firebase_config import verify_token, get_firestore_client
+            decoded = verify_token(id_token)
+            if decoded:
+                uid = decoded["uid"]
+                db = get_firestore_client()
+                if db:
+                    db.collection("users").document(uid).collection("holdings").document(body.ticker).set(new_holding)
+                    print(f"Firestore保存完了: users/{uid}/holdings/{body.ticker}")
+        except Exception as e:
+            print(f"Firestore保存エラー（処理は続行）: {e}")
+
     return new_holding
 
 
