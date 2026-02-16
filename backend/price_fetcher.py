@@ -198,7 +198,7 @@ def fetch_stock_info(ticker: str) -> dict | None:
 
 
 def get_cache_updated_at() -> str | None:
-    """キャッシュの最終更新日時を返す（ISO形式）"""
+    """キャッシュの最終更新日時を返す（日本時間のISO形式）"""
     if not os.path.exists(CACHE_FILE):
         return None
     try:
@@ -207,6 +207,7 @@ def get_cache_updated_at() -> str | None:
             return None
         latest = max(v["timestamp"] for v in cache.values())
         import datetime
-        return datetime.datetime.fromtimestamp(latest).isoformat()
+        JST = datetime.timezone(datetime.timedelta(hours=9))
+        return datetime.datetime.fromtimestamp(latest, tz=JST).isoformat()
     except Exception:
         return None

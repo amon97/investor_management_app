@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 
-import { getApiBaseUrl } from "@/lib/api";
+import { getApiBaseUrl, authFetch } from "@/lib/api";
 
 const API_BASE = getApiBaseUrl();
 
@@ -38,7 +38,7 @@ export default function DividendsPage() {
     const [expandedMonths, setExpandedMonths] = useState<Set<number>>(new Set());
 
     useEffect(() => {
-        fetch(`${API_BASE}/api/dividends`)
+        authFetch(`${API_BASE}/api/dividends`)
             .then((res) => res.json())
             .then((d) => {
                 setData(d);

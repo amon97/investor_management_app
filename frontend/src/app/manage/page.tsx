@@ -6,7 +6,7 @@ import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 
-import { getApiBaseUrl } from "@/lib/api";
+import { getApiBaseUrl, authFetch } from "@/lib/api";
 
 const API_BASE = getApiBaseUrl();
 
@@ -67,7 +67,7 @@ export default function ManagePage() {
   const loadHoldings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/portfolio`);
+      const res = await authFetch(`${API_BASE}/api/portfolio`);
       const data = await res.json();
       setHoldings(data.holdings || []);
     } catch {
@@ -90,16 +90,16 @@ export default function ManagePage() {
     setAutoFilled(false);
     setFetchedPrice(null);
     try {
-      const res = await fetch(`${API_BASE}/api/stock-info/${ticker}`);
+      const res = await authFetch(`${API_BASE}/api/stock-info/${ticker}`);
       if (res.ok) {
         const info = await res.json();
         setFetchedPrice(info.current_price || null);
         setForm((f) => ({
           ...f,
           name: info.name || f.name,
-          average_cost: f.average_cost || String(Math.round(info.current_price || 0)),
-          annual_dividend_per_share: f.annual_dividend_per_share || String(info.annual_dividend_per_share || ""),
-          sector: info.sector && info.sector !== "その他" ? info.sector : f.sector,
+          average_cost: String(Math.round(info.current_price || 0)),
+          annual_dividend_per_share: String(info.annual_dividend_per_share || "0"),
+          sector: info.sector || f.sector,
         }));
         setAutoFilled(true);
         // 3秒後に取得済みインジケーターを消す
@@ -144,14 +144,6 @@ export default function ManagePage() {
 
     setSubmitting(true);
     try {
-      // Authorizationヘッダーを付与（ログイン中のみ）
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (user) {
-        const { getAuth } = await import("firebase/auth");
-        const idToken = await getAuth().currentUser?.getIdToken();
-        if (idToken) headers["Authorization"] = `Bearer ${idToken}`;
-      }
-
       const holdingPayload = {
         ticker: form.ticker.trim(),
         name: form.name.trim(),
@@ -161,9 +153,9 @@ export default function ManagePage() {
         sector: form.sector,
       };
 
-      const res = await fetch(`${API_BASE}/api/portfolio/holdings`, {
+      const res = await authFetch(`${API_BASE}/api/portfolio/holdings`, {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(holdingPayload),
       });
 
@@ -197,7 +189,7 @@ export default function ManagePage() {
 
   const handleDelete = async (ticker: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/portfolio/holdings/${ticker}`, {
+      const res = await authFetch(`${API_BASE}/api/portfolio/holdings/${ticker}`, {
         method: "DELETE",
       });
       if (res.ok || res.status === 204) {
