@@ -1,26 +1,20 @@
-name: バックエンド → Railway デプロイ
+name: バックエンド → Render デプロイ
 
 on:
   push:
     branches: [master, main]
     paths:
       - "backend/**"
+      - "render.yaml"
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
 jobs:
   deploy:
-    name: Railway Production Deploy
+    name: Render Production Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Railway CLI のインストール
-        run: npm install -g @railway/cli
-
-      - name: Railway へデプロイ
-        working-directory: backend
-        run: railway up --service investor-backend --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: 03f9b5f0-ce9d-4ae8-9552-15b12bd953e1
+      - name: Render Deploy Hook を呼び出す
+        run: |
+          curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" | head -1
+          echo "Deploy triggered."
