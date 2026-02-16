@@ -23,3 +23,4 @@ jobs:
         run: railway up --service investor-backend --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: 03f9b5f0-ce9d-4ae8-9552-15b12bd953e1
