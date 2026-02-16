@@ -289,8 +289,55 @@ def get_stock_info(ticker: str, user: dict | None = Depends(get_current_user)):
 
 @app.get("/api/dividends")
 def get_dividends(user: dict | None = Depends(get_current_user)):
-    """月別の配当金入金スケジュールを返す"""
-    return load_json(DIVIDENDS_FILE)
+    """月別の配当金入金スケジュールを返す（保有銘柄に基づいて金額を動的に計算）"""
+    data = load_json(DIVIDENDS_FILE)
+    holdings = get_holdings()
+    
+    # 銘柄ごとのHoldingオブジェクトをマップ化
+    holdings_map = {h["ticker"]: h for h in holdings}
+    
+    # スケジュール内の銘柄出現回数をカウント（年間配当を分割するため）
+    # 例: トヨタが年2回出てくるなら、都度の配当は 年間配当 / 2 とする（簡易計算）
+    ticker_counts = {}
+    for month_data in data.get("schedule", []):
+        for e in month_data.get("entries", []):
+            t = e["ticker"]
+            ticker_counts[t] = ticker_counts.get(t, 0) + 1
+
+    new_schedule = []
+    annual_total = 0
+
+    for month_data in data.get("schedule", []):
+        filtered_entries = []
+        
+        for e in month_data.get("entries", []):
+            ticker = e["ticker"]
+            if ticker in holdings_map:
+                holding = holdings_map[ticker]
+                count = ticker_counts.get(ticker, 1) # 0除算防止
+                
+                # その回の配当金 = (保有株数 * 年間配当金) / 年間回数
+                # ※端数は切り捨てて整数に
+                total_dividend_for_holding = holding["shares"] * holding["annual_dividend_per_share"]
+                amount_per_payment = int(total_dividend_for_holding / count) if count > 0 else 0
+                
+                # エントリーをコピーして金額を上書き
+                new_entry = e.copy()
+                new_entry["amount"] = amount_per_payment
+                filtered_entries.append(new_entry)
+                
+                annual_total += amount_per_payment
+
+        new_schedule.append({
+            "month": month_data["month"],
+            "label": month_data["label"],
+            "entries": filtered_entries
+        })
+
+    return {
+        "schedule": new_schedule,
+        "annual_total": annual_total
+    }
 
 
 # ---------- ニュース ----------
