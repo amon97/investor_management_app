@@ -108,11 +108,23 @@ def fetch_price(ticker: str) -> float | None:
         return None
 
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 def fetch_prices(tickers: list[str]) -> dict[str, float | None]:
-    """複数銘柄の現在値を一括取得"""
+    """複数銘柄の現在値を並列で一括取得"""
     result = {}
-    for ticker in tickers:
-        result[ticker] = fetch_price(ticker)
+    # Yahoo Finance APIへの負荷を考慮し、ワーカー数は適度に制限（例: 8）
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        future_to_ticker = {
+            executor.submit(fetch_price, ticker): ticker for ticker in tickers
+        }
+        for future in as_completed(future_to_ticker):
+            ticker = future_to_ticker[future]
+            try:
+                result[ticker] = future.result()
+            except Exception as e:
+                print(f"並列取得エラー ({ticker}): {e}")
+                result[ticker] = None
     return result
 
 
