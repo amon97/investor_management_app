@@ -123,67 +123,78 @@ def _resolve_sector(raw_sector: str | None) -> str:
     return _SECTOR_MAP.get(raw_sector, "その他")
 
 
-def _fetch_sector_from_profile(symbol: str) -> str:
-    """Yahoo Finance v10 quoteSummary (assetProfile) からセクターを取得"""
-    url = (
-        f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{symbol}"
-        f"?modules=assetProfile"
-    )
+def _fetch_sector_from_search(symbol: str) -> str:
+    """Yahoo Finance search API からセクターを取得（v1/finance/search）"""
+    url = f"https://query1.finance.yahoo.com/v1/finance/search?q={symbol}&quotesCount=1"
     try:
         resp = requests.get(url, headers=HEADERS, timeout=8)
         resp.raise_for_status()
-        result = resp.json()
-        profile = (
-            result.get("quoteSummary", {})
-            .get("result", [{}])[0]
-            .get("assetProfile", {})
-        )
-        raw = profile.get("sectorDisp") or profile.get("sector")
-        return _resolve_sector(raw)
+        quotes = resp.json().get("quotes", [])
+        if quotes:
+            raw = quotes[0].get("sector")
+            return _resolve_sector(raw)
     except Exception:
-        return "その他"
+        pass
+    return "その他"
+
+
+def _fetch_annual_dividend(symbol: str) -> float:
+    """v8/chart の events=div から過去1年間の配当合計を取得"""
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+        f"?interval=3mo&range=2y&events=div"
+    )
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        events = (
+            data.get("chart", {})
+            .get("result", [{}])[0]
+            .get("events", {})
+            .get("dividends", {})
+        )
+        cutoff = time.time() - 365 * 24 * 3600
+        total = sum(v["amount"] for v in events.values() if v["date"] >= cutoff)
+        return float(total)
+    except Exception:
+        return 0.0
 
 
 def fetch_stock_info(ticker: str) -> dict | None:
     """銘柄の基本情報（名称・現在価格・年間配当・セクター）を取得"""
     symbol = to_yahoo_symbol(ticker)
 
-    url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}"
-
+    # v8/chart で名称・現在値を取得（v7/quote は 2025年以降 401 のため非使用）
+    chart_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1d"
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=10)
+        resp = requests.get(chart_url, headers=HEADERS, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-
-        if not data.get("quoteResponse") or not data["quoteResponse"]["result"]:
-            print(f"銘柄が見つかりません: {symbol}")
-            return None
-
-        res = data["quoteResponse"]["result"][0]
-
-        # 配当（単株当たり年間配当額）
-        div_per_share = res.get("trailingAnnualDividendRate") or 0
-
-        # 銘柄名
-        name = res.get("longName") or res.get("shortName") or res.get("displayName") or ticker
-
-        # セクター: v7/quote で取れる場合はそのまま使用、なければ v10 で補完
-        raw_sector = res.get("sectorDisp") or res.get("sector")
-        sector = _resolve_sector(raw_sector) if raw_sector else _fetch_sector_from_profile(symbol)
-
-        return {
-            "ticker": ticker,
-            "symbol": symbol,
-            "name": name,
-            "current_price": float(res.get("regularMarketPrice", 0)),
-            "annual_dividend_per_share": float(div_per_share),
-            "sector": sector,
-            "currency": res.get("currency", "JPY"),
-            "exchange": res.get("fullExchangeName", ""),
-        }
+        meta = data["chart"]["result"][0]["meta"]
     except Exception as e:
         print(f"銘柄情報取得エラー ({ticker}): {e}")
         return None
+
+    name = meta.get("longName") or meta.get("shortName") or ticker
+    current_price = float(meta.get("regularMarketPrice", 0))
+    currency = meta.get("currency", "JPY")
+    exchange = meta.get("exchangeName", "")
+
+    # 配当・セクターは別 API で補完
+    annual_dividend = _fetch_annual_dividend(symbol)
+    sector = _fetch_sector_from_search(symbol)
+
+    return {
+        "ticker": ticker,
+        "symbol": symbol,
+        "name": name,
+        "current_price": current_price,
+        "annual_dividend_per_share": annual_dividend,
+        "sector": sector,
+        "currency": currency,
+        "exchange": exchange,
+    }
 
 
 def get_cache_updated_at() -> str | None:
