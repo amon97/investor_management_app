@@ -179,7 +179,9 @@ export default function ManagePage() {
       setFetchedPrice(null);
       setAutoFilled(false);
       setShowForm(false);
-      await loadHoldings();
+
+      // リロードせずにstateを更新（高速化）
+      setHoldings(prev => [...prev, savedHolding]);
     } catch {
       showAlert("error", "通信エラーが発生しました");
     } finally {
@@ -197,7 +199,9 @@ export default function ManagePage() {
         await deleteFromFirestore(ticker);
         showAlert("success", "銘柄を削除しました");
         setDeleteConfirm(null);
-        await loadHoldings();
+
+        // リロードせずにstateを更新（高速化）
+        setHoldings(prev => prev.filter(h => h.ticker !== ticker));
       } else {
         showAlert("error", "削除に失敗しました");
       }
