@@ -9,7 +9,7 @@
       "average_cost": 2150,
       "current_price": 2680,
       "market_value": 804000,
-      "annual_dividend_per_share": 75,
+      "annual_dividend_per_share": 95.0,
       "sector": "自動車"
     },
     {
@@ -19,7 +19,7 @@
       "average_cost": 168,
       "current_price": 185,
       "market_value": 370000,
-      "annual_dividend_per_share": 5.2,
+      "annual_dividend_per_share": 5.25,
       "sector": "通信"
     },
     {
@@ -29,7 +29,7 @@
       "average_cost": 4200,
       "current_price": 4850,
       "market_value": 970000,
-      "annual_dividend_per_share": 140,
+      "annual_dividend_per_share": 77.5,
       "sector": "通信"
     },
     {
@@ -39,7 +39,7 @@
       "average_cost": 2100,
       "current_price": 2530,
       "market_value": 1012000,
-      "annual_dividend_per_share": 100,
+      "annual_dividend_per_share": 105.0,
       "sector": "商社"
     },
     {
@@ -49,7 +49,7 @@
       "average_cost": 3800,
       "current_price": 4120,
       "market_value": 824000,
-      "annual_dividend_per_share": 194,
+      "annual_dividend_per_share": 234.0,
       "sector": "食品"
     },
     {
@@ -59,7 +59,7 @@
       "average_cost": 3500,
       "current_price": 5600,
       "market_value": 560000,
-      "annual_dividend_per_share": 121,
+      "annual_dividend_per_share": 196.5,
       "sector": "保険"
     },
     {
@@ -69,7 +69,7 @@
       "average_cost": 950,
       "current_price": 1680,
       "market_value": 5040000,
-      "annual_dividend_per_share": 41,
+      "annual_dividend_per_share": 74.0,
       "sector": "銀行"
     },
     {
@@ -79,7 +79,7 @@
       "average_cost": 4000,
       "current_price": 4000,
       "market_value": 2000000,
-      "annual_dividend_per_share": 196,
+      "annual_dividend_per_share": 198.0,
       "sector": "医薬"
     },
     {
@@ -89,7 +89,7 @@
       "average_cost": 3200,
       "current_price": 5000,
       "market_value": 1000000,
-      "annual_dividend_per_share": 50,
+      "annual_dividend_per_share": 22.5,
       "sector": "電機"
     }
   ]

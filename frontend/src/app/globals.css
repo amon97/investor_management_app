@@ -26,7 +26,9 @@
    ベース
    ======================================== */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -356,7 +358,12 @@ h3 {
    ======================================== */
 
 .page-content {
-  /* bottom-nav の高さ + safe area */
+  max-width: 960px;
+  margin: 0 auto;
+  /* 上: 1.25rem, 左右: 1rem, 下: BottomNav分 */
+  padding: 1.25rem 1rem;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
   padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
@@ -414,8 +421,15 @@ h3 {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* ========================================
@@ -423,8 +437,13 @@ h3 {
    ======================================== */
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinning {
@@ -439,9 +458,11 @@ h3 {
   ::-webkit-scrollbar {
     width: 8px;
   }
+
   ::-webkit-scrollbar-track {
     background: #f1f1f1;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #c5c5c5;
     border-radius: 4px;

@@ -18,16 +18,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       ) : (
         <ProtectedRoute>
           <Header />
-          <main
-            className="page-content"
-            style={{
-              maxWidth: 960,
-              margin: "0 auto",
-              padding: "1.25rem 1rem",
-              paddingLeft: "max(1rem, env(safe-area-inset-left))",
-              paddingRight: "max(1rem, env(safe-area-inset-right))",
-            }}
-          >
+          <main className="page-content">
             {children}
           </main>
           <BottomNav />

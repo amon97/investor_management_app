@@ -123,8 +123,46 @@ def _resolve_sector(raw_sector: str | None) -> str:
     return _SECTOR_MAP.get(raw_sector, "その他")
 
 
+def _guess_sector_from_ticker(ticker: str) -> str:
+    """
+    銘柄コードからセクターを推測する（API取得失敗時のフォールバック）。
+    東証33業種のコード範囲に基づいた簡易的な判定。
+    """
+    if not ticker.isdigit():
+        return "その他"
+    
+    code = int(ticker)
+    
+    # 簡易的な範囲判定（代表的なもののみ）
+    if 1300 <= code < 1400: return "食品"         # 水産・農林
+    if 1600 <= code < 1700: return "エネルギー"   # 鉱業
+    if 1700 <= code < 2000: return "インフラ"     # 建設
+    if 2000 <= code < 3000: return "食品"         # 食品・繊維など混在だが食品多し
+    if 3000 <= code < 4000: return "その他"       # 小売・化学・情報など混在
+    if 4000 <= code < 5000: return "医薬"         # 化学・医薬
+    if 5000 <= code < 6000: return "その他"       # 鉄鋼・非鉄・金属・機械
+    if 6000 <= code < 7000: return "電機"         # 機械・電気機器・サービス
+    if 7000 <= code < 7200: return "その他"       # 輸送用機器など
+    if 7200 <= code < 7300: return "自動車"       # 輸送用機器（自動車）
+    if 7700 <= code < 8000: return "電機"         # 精密機器・その他製品
+    if 8000 <= code < 8300: return "商社"         # 卸売・小売
+    if 8300 <= code < 8600: return "銀行"         # 銀行・証券
+    if 8600 <= code < 8800: return "銀行"         # 証券・金融
+    if 8800 <= code < 9000: return "不動産"       # 不動産
+    if 9000 <= code < 9300: return "インフラ"     # 陸運・海運
+    if 9300 <= code < 9400: return "インフラ"     # 倉庫
+    if 9400 <= code < 9500: return "通信"         # 情報・通信
+    if 9500 <= code < 9600: return "インフラ"     # 電気・ガス
+    if 9600 <= code < 10000: return "その他"      # サービス
+    
+    return "その他"
+
+
 def _fetch_sector_from_search(symbol: str) -> str:
     """Yahoo Finance search API からセクターを取得（v1/finance/search）"""
+    # シンボルからコード部分を抽出（例: "7203.T" -> "7203"）
+    ticker_part = symbol.split(".")[0]
+    
     url = f"https://query1.finance.yahoo.com/v1/finance/search?q={symbol}&quotesCount=1"
     try:
         resp = requests.get(url, headers=HEADERS, timeout=8)
@@ -132,10 +170,14 @@ def _fetch_sector_from_search(symbol: str) -> str:
         quotes = resp.json().get("quotes", [])
         if quotes:
             raw = quotes[0].get("sector")
-            return _resolve_sector(raw)
+            resolved = _resolve_sector(raw)
+            if resolved != "その他":
+                return resolved
     except Exception:
         pass
-    return "その他"
+    
+    # API取得失敗または「その他」だった場合は、コードから推測
+    return _guess_sector_from_ticker(ticker_part)
 
 
 def _fetch_annual_dividend(symbol: str) -> float:
