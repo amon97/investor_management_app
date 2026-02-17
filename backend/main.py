@@ -290,48 +290,81 @@ def get_stock_info(ticker: str, user: dict | None = Depends(get_current_user)):
 @app.get("/api/dividends")
 def get_dividends(user: dict | None = Depends(get_current_user)):
     """月別の配当金入金スケジュールを返す（保有銘柄に基づいて金額を動的に計算）"""
+    from datetime import date
+
     data = load_json(DIVIDENDS_FILE)
     holdings = get_holdings()
-    
+
     # 銘柄ごとのHoldingオブジェクトをマップ化
     holdings_map = {h["ticker"]: h for h in holdings}
-    
-    # スケジュール内の銘柄出現回数をカウント（年間配当を分割するため）
-    # 例: トヨタが年2回出てくるなら、都度の配当は 年間配当 / 2 とする（簡易計算）
-    ticker_counts = {}
+
+    # 静的スケジュール内の銘柄出現回数をカウント
+    ticker_counts: dict[str, int] = {}
+    tickers_in_schedule: set[str] = set()
     for month_data in data.get("schedule", []):
         for e in month_data.get("entries", []):
             t = e["ticker"]
             ticker_counts[t] = ticker_counts.get(t, 0) + 1
+            tickers_in_schedule.add(t)
 
-    new_schedule = []
-    annual_total = 0
+    # 12ヶ月分のスケジュールを構築
+    schedule_map: dict[int, list] = {m: [] for m in range(1, 13)}
 
+    # 1) 静的スケジュールにある銘柄 → 金額を動的に再計算
     for month_data in data.get("schedule", []):
-        filtered_entries = []
-        
         for e in month_data.get("entries", []):
             ticker = e["ticker"]
             if ticker in holdings_map:
                 holding = holdings_map[ticker]
-                count = ticker_counts.get(ticker, 1) # 0除算防止
-                
-                # その回の配当金 = (保有株数 * 年間配当金) / 年間回数
-                # ※端数は切り捨てて整数に
-                total_dividend_for_holding = holding["shares"] * holding.get("annual_dividend_per_share", 0)
-                amount_per_payment = int(total_dividend_for_holding / count) if count > 0 else 0
-                
-                # エントリーをコピーして金額を上書き
+                count = ticker_counts.get(ticker, 1)
+                total_div = holding["shares"] * holding.get("annual_dividend_per_share", 0)
+                amount = int(total_div / count) if count > 0 else 0
                 new_entry = e.copy()
-                new_entry["amount"] = amount_per_payment
-                filtered_entries.append(new_entry)
-                
-                annual_total += amount_per_payment
+                new_entry["amount"] = amount
+                schedule_map[month_data["month"]].append(new_entry)
 
+    # 2) 静的スケジュールにない銘柄 → 3月・9月のデフォルトスケジュールを自動生成
+    year = date.today().year
+    for h in holdings:
+        ticker = h["ticker"]
+        if ticker in tickers_in_schedule:
+            continue
+        annual_div = h.get("annual_dividend_per_share", 0)
+        if annual_div <= 0:
+            continue
+        total_div = h["shares"] * annual_div
+        amount_per_payment = int(total_div / 2)
+
+        # 3月権利確定 → 6月入金
+        schedule_map[3].append({
+            "ticker": ticker,
+            "name": h["name"],
+            "amount": amount_per_payment,
+            "ex_date": f"{year}-03-30",
+            "payment_date": f"{year}-06-01",
+            "note": "期末配当（自動推定）",
+        })
+        # 9月権利確定 → 12月入金
+        schedule_map[9].append({
+            "ticker": ticker,
+            "name": h["name"],
+            "amount": amount_per_payment,
+            "ex_date": f"{year}-09-28",
+            "payment_date": f"{year}-12-01",
+            "note": "中間配当（自動推定）",
+        })
+
+    # 年間合計を計算
+    annual_total = 0
+    new_schedule = []
+    for m in range(1, 13):
+        entries = schedule_map[m]
+        month_sum = sum(e["amount"] for e in entries)
+        annual_total += month_sum
         new_schedule.append({
-            "month": month_data["month"],
-            "label": month_data["label"],
-            "entries": filtered_entries
+            "month": m,
+            "label": f"{m}月",
+            "entries": entries,
         })
 
     return {
