@@ -12,7 +12,7 @@ const API_BASE = getApiBaseUrl();
 
 const SECTORS = [
   "自動車", "通信", "商社", "食品", "保険", "銀行", "医薬",
-  "電機", "不動産", "小売", "エネルギー", "インフラ", "その他",
+  "電機", "不動産", "小売", "エネルギー", "インフラ", "投資信託", "その他",
 ];
 
 interface Holding {
@@ -179,7 +179,9 @@ export default function ManagePage() {
       setFetchedPrice(null);
       setAutoFilled(false);
       setShowForm(false);
-      await loadHoldings();
+
+      // リロードせずにstateを更新（高速化）
+      setHoldings(prev => [...prev, savedHolding]);
     } catch {
       showAlert("error", "通信エラーが発生しました");
     } finally {
@@ -197,7 +199,9 @@ export default function ManagePage() {
         await deleteFromFirestore(ticker);
         showAlert("success", "銘柄を削除しました");
         setDeleteConfirm(null);
-        await loadHoldings();
+
+        // リロードせずにstateを更新（高速化）
+        setHoldings(prev => prev.filter(h => h.ticker !== ticker));
       } else {
         showAlert("error", "削除に失敗しました");
       }
