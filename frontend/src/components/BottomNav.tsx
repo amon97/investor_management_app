@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Coins, Newspaper, Settings, BookOpen } from "lucide-react";
+import { Home, Coins, Newspaper, Settings, GraduationCap } from "lucide-react";
 
 const navItems = [
     { href: "/", label: "ホーム", icon: Home },
     { href: "/dividends", label: "配当", icon: Coins },
-    { href: "/nisa", label: "NISA", icon: BookOpen },
+    { href: "/learn", label: "学習", icon: GraduationCap },
     { href: "/news", label: "ニュース", icon: Newspaper },
     { href: "/manage", label: "管理", icon: Settings },
 ];

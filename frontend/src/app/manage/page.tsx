@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Settings, Plus, Trash2, Search, CheckCircle, AlertCircle, Sparkles } from "lucide-react";
+import { Settings, Plus, Trash2, Search, CheckCircle, AlertCircle, Sparkles, Pencil, Save, X } from "lucide-react";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -58,6 +58,8 @@ export default function ManagePage() {
   const [autoFilled, setAutoFilled] = useState(false);
   const [fetchedPrice, setFetchedPrice] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [editingTicker, setEditingTicker] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ shares: "", average_cost: "" });
 
   const showAlert = (type: "success" | "error", message: string) => {
     setAlert({ type, message });
@@ -186,6 +188,39 @@ export default function ManagePage() {
       showAlert("error", "通信エラーが発生しました");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const startEdit = (h: Holding) => {
+    setEditingTicker(h.ticker);
+    setEditForm({
+      shares: String(h.shares),
+      average_cost: String(h.average_cost),
+    });
+    setDeleteConfirm(null);
+  };
+
+  const handleEditSave = async (ticker: string) => {
+    try {
+      const res = await authFetch(`${API_BASE}/api/portfolio/holdings/${ticker}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shares: parseInt(editForm.shares),
+          average_cost: parseFloat(editForm.average_cost),
+        }),
+      });
+      if (res.ok) {
+        const updated: Holding = await res.json();
+        await saveToFirestore(updated);
+        setHoldings(prev => prev.map(h => h.ticker === ticker ? { ...h, ...updated } : h));
+        setEditingTicker(null);
+        showAlert("success", "銘柄情報を更新しました");
+      } else {
+        showAlert("error", "更新に失敗しました");
+      }
+    } catch {
+      showAlert("error", "通信エラーが発生しました");
     }
   };
 
@@ -476,65 +511,82 @@ export default function ManagePage() {
                   <p style={{ color: "#888", fontSize: "0.9rem", margin: "0.2rem 0 0" }}>
                     コード: {h.ticker} ／ {h.sector}
                   </p>
-                  <p style={{ color: "#555", fontSize: "0.95rem", margin: "0.4rem 0 0" }}>
-                    {h.shares}株 ／ 取得単価: {h.average_cost.toLocaleString()}円 ／ 現在値: {h.current_price.toLocaleString()}円
-                  </p>
-                  <p style={{ color: "#16a34a", fontSize: "0.95rem", margin: "0.2rem 0 0", fontWeight: 600 }}>
-                    年間配当: {Math.round(h.shares * h.annual_dividend_per_share).toLocaleString()}円
-                  </p>
-                </div>
 
-                {/* 削除ボタン */}
-                <div>
-                  {deleteConfirm === h.ticker ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-end" }}>
-                      <p style={{ fontSize: "0.9rem", color: "#dc2626", margin: 0, fontWeight: 600 }}>
-                        本当に削除しますか？
-                      </p>
-                      <div style={{ display: "flex", gap: "0.4rem" }}>
+                  {editingTicker === h.ticker ? (
+                    /* 編集モード */
+                    <div style={{ marginTop: "0.75rem" }}>
+                      <div className="form-grid-2">
+                        <div>
+                          <label style={{ ...labelStyle, fontSize: "0.9rem" }}>保有株数</label>
+                          <input
+                            type="number"
+                            value={editForm.shares}
+                            onChange={(e) => setEditForm(f => ({ ...f, shares: e.target.value }))}
+                            min={1}
+                            style={{ ...inputStyle, padding: "0.5rem 0.75rem", minHeight: 44 }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ ...labelStyle, fontSize: "0.9rem" }}>取得単価（円）</label>
+                          <input
+                            type="number"
+                            value={editForm.average_cost}
+                            onChange={(e) => setEditForm(f => ({ ...f, average_cost: e.target.value }))}
+                            min={0}
+                            step={0.01}
+                            style={{ ...inputStyle, padding: "0.5rem 0.75rem", minHeight: 44 }}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
                         <button
-                          onClick={() => handleDelete(h.ticker)}
-                          style={{
-                            padding: "0.4rem 0.8rem",
-                            background: "#dc2626",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "8px",
-                            fontSize: "0.95rem",
-                            cursor: "pointer",
-                            minHeight: 40,
-                          }}
+                          onClick={() => handleEditSave(h.ticker)}
+                          className="btn-primary"
+                          style={{ flex: 1, fontSize: "0.95rem", minHeight: 44, padding: "0.5rem" }}
                         >
-                          削除
+                          <Save size={16} />
+                          保存
                         </button>
                         <button
-                          onClick={() => setDeleteConfirm(null)}
+                          onClick={() => setEditingTicker(null)}
                           style={{
-                            padding: "0.4rem 0.8rem",
-                            background: "#e5e7eb",
-                            color: "#333",
-                            border: "none",
-                            borderRadius: "8px",
-                            fontSize: "0.95rem",
-                            cursor: "pointer",
-                            minHeight: 40,
+                            flex: 1, padding: "0.5rem", borderRadius: "10px",
+                            border: "2px solid #e5e7eb", background: "#fff",
+                            fontSize: "0.95rem", cursor: "pointer", minHeight: 44,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem",
                           }}
                         >
-                          戻る
+                          <X size={16} />
+                          やめる
                         </button>
                       </div>
                     </div>
                   ) : (
+                    /* 表示モード */
+                    <>
+                      <p style={{ color: "#555", fontSize: "0.95rem", margin: "0.4rem 0 0" }}>
+                        {h.shares}株 ／ 取得単価: {h.average_cost.toLocaleString()}円 ／ 現在値: {h.current_price.toLocaleString()}円
+                      </p>
+                      <p style={{ color: "#16a34a", fontSize: "0.95rem", margin: "0.2rem 0 0", fontWeight: 600 }}>
+                        年間配当: {Math.round(h.shares * h.annual_dividend_per_share).toLocaleString()}円
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* 編集・削除ボタン */}
+                {editingTicker !== h.ticker && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                     <button
-                      onClick={() => setDeleteConfirm(h.ticker)}
-                      aria-label={`${h.name}を削除`}
+                      onClick={() => startEdit(h)}
+                      aria-label={`${h.name}を編集`}
                       style={{
                         padding: "0.6rem",
-                        background: "#fef2f2",
-                        border: "1px solid #fecaca",
+                        background: "#eff6ff",
+                        border: "1px solid #bfdbfe",
                         borderRadius: "10px",
                         cursor: "pointer",
-                        color: "#dc2626",
+                        color: "#2563eb",
                         display: "flex",
                         alignItems: "center",
                         minHeight: 48,
@@ -542,10 +594,59 @@ export default function ManagePage() {
                         justifyContent: "center",
                       }}
                     >
-                      <Trash2 size={20} />
+                      <Pencil size={18} />
                     </button>
-                  )}
-                </div>
+                    {deleteConfirm === h.ticker ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-end" }}>
+                        <p style={{ fontSize: "0.85rem", color: "#dc2626", margin: 0, fontWeight: 600 }}>
+                          削除する？
+                        </p>
+                        <div style={{ display: "flex", gap: "0.3rem" }}>
+                          <button
+                            onClick={() => handleDelete(h.ticker)}
+                            style={{
+                              padding: "0.3rem 0.6rem", background: "#dc2626", color: "#fff",
+                              border: "none", borderRadius: "8px", fontSize: "0.9rem",
+                              cursor: "pointer", minHeight: 36,
+                            }}
+                          >
+                            はい
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(null)}
+                            style={{
+                              padding: "0.3rem 0.6rem", background: "#e5e7eb", color: "#333",
+                              border: "none", borderRadius: "8px", fontSize: "0.9rem",
+                              cursor: "pointer", minHeight: 36,
+                            }}
+                          >
+                            いいえ
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeleteConfirm(h.ticker)}
+                        aria-label={`${h.name}を削除`}
+                        style={{
+                          padding: "0.6rem",
+                          background: "#fef2f2",
+                          border: "1px solid #fecaca",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                          color: "#dc2626",
+                          display: "flex",
+                          alignItems: "center",
+                          minHeight: 48,
+                          minWidth: 48,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
