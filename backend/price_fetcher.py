@@ -181,7 +181,12 @@ def _fetch_sector_from_search(symbol: str) -> str:
         resp.raise_for_status()
         quotes = resp.json().get("quotes", [])
         if quotes:
-            raw = quotes[0].get("sector")
+            quote = quotes[0]
+            # ETF・投資信託は quoteType で判定
+            quote_type = quote.get("quoteType", "")
+            if quote_type in ("ETF", "MUTUALFUND"):
+                return "投資信託"
+            raw = quote.get("sector")
             resolved = _resolve_sector(raw)
             if resolved != "その他":
                 return resolved
