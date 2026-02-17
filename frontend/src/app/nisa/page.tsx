@@ -32,7 +32,7 @@ export default function NisaPage() {
       <div className="card" style={{ marginBottom: "1rem" }}>
         <h2 style={{ fontSize: "1.2rem", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <Coins size={22} color="#d4a017" />
-          2つの投資わく
+          2つの投資枠
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {/* つみたて投資枠 */}
@@ -43,7 +43,7 @@ export default function NisaPage() {
             border: "1px solid #bfdbfe",
           }}>
             <h3 style={{ fontSize: "1.1rem", color: "#2563eb", margin: "0 0 0.5rem" }}>
-              つみたて投資わく
+              つみたて投資枠
             </h3>
             <ul style={{ fontSize: "1.05rem", lineHeight: 2, color: "#444", paddingLeft: "1.2rem", margin: 0 }}>
               <li>年間<strong>120万円</strong>まで投資できます</li>
@@ -61,7 +61,7 @@ export default function NisaPage() {
             border: "1px solid #fde68a",
           }}>
             <h3 style={{ fontSize: "1.1rem", color: "#b45309", margin: "0 0 0.5rem" }}>
-              成長投資わく
+              成長投資枠
             </h3>
             <ul style={{ fontSize: "1.05rem", lineHeight: 2, color: "#444", paddingLeft: "1.2rem", margin: 0 }}>
               <li>年間<strong>240万円</strong>まで投資できます</li>
