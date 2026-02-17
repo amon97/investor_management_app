@@ -157,7 +157,7 @@ def get_portfolio(user: dict | None = Depends(get_current_user)):
 
     total_asset = sum(h["market_value"] for h in enriched)
     annual_dividend = sum(
-        h["shares"] * h["annual_dividend_per_share"] for h in enriched
+        h["shares"] * h.get("annual_dividend_per_share", 0) for h in enriched
     )
 
     return {
@@ -318,7 +318,7 @@ def get_dividends(user: dict | None = Depends(get_current_user)):
                 
                 # その回の配当金 = (保有株数 * 年間配当金) / 年間回数
                 # ※端数は切り捨てて整数に
-                total_dividend_for_holding = holding["shares"] * holding["annual_dividend_per_share"]
+                total_dividend_for_holding = holding["shares"] * holding.get("annual_dividend_per_share", 0)
                 amount_per_payment = int(total_dividend_for_holding / count) if count > 0 else 0
                 
                 # エントリーをコピーして金額を上書き

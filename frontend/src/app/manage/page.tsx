@@ -344,7 +344,7 @@ export default function ManagePage() {
               </div>
 
               {/* 保有株数・取得単価 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div className="form-grid-2">
                 <div>
                   <label style={labelStyle}>保有株数*</label>
                   <input
@@ -384,7 +384,7 @@ export default function ManagePage() {
               </div>
 
               {/* 年間配当・セクター */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div className="form-grid-2">
                 <div>
                   <label style={labelStyle}>年間配当（円/株）</label>
                   <input

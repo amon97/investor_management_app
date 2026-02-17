@@ -102,10 +102,7 @@ export default function NisaPage() {
           <p style={{ marginTop: "0.5rem" }}>
             例えば年間10万円の配当をもらう場合：
           </p>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0.75rem",
+          <div className="form-grid-2" style={{
             marginTop: "0.75rem",
           }}>
             <div style={{
@@ -139,7 +136,7 @@ export default function NisaPage() {
       </div>
 
       {/* 注意点 */}
-      <div className="card" style={{ marginBottom: "1rem" }}>
+      <div className="card" style={{ marginBottom: "2rem" }}>
         <h2 style={{ fontSize: "1.2rem", marginBottom: "0.75rem" }}>
           ⚠️ 知っておきたいこと
         </h2>
